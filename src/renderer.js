@@ -5,57 +5,26 @@ const path = require('path');
 module.exports = function(context) {
 
 	const hooks = context.hooks;
-	const userHome = context.environment.userHome;
-	const fs = context.fileSystemJetpack;
-	const notifier = context.notifier;
 	const React = context.React;
+	const {Link, Route} = context.ReactRouter;
 
-	let configureIntelliJ = (event, site) => {
+	const SiteInfoStats = require('./SiteInfoStats')(context);
 
-		let sitePath = site.path.replace('~/', userHome + '/').replace(/\/+$/,'') + '/';
-
-		let publicCWD = fs.cwd(path.join(sitePath, './app/public'));
-
-		let phpXML = `<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="PhpProjectServersManager">
-    <servers>
-      <server host="${site.domain}" id="${Math.round(Math.random() * 10000000)}" name="Pressmatic" use_path_mappings="true">
-        <path_mappings>
-          <mapping local-root="$PROJECT_DIR$" remote-root="/app/public" />
-        </path_mappings>
-      </server>
-    </servers>
-  </component>
-</project>`;
-
-		let PressmaticXML = `<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Pressmatic" type="PhpWebAppRunConfigurationType" factoryName="PHP Web Application" singleton="true" server_name="Pressmatic">
-    <method />
-  </configuration>
-</component>`;
-
-		publicCWD.write('./.idea/php.xml', phpXML);
-		publicCWD.write('./.idea/runConfigurations/Pressmatic.xml', PressmaticXML);
-
-		event.target.setAttribute('disabled', 'true');
-
-		notifier.notify({
-			title: 'Xdebug',
-			message: 'IntelliJ IDEs have been configured for Xdebug.'
+	hooks.addContent('routesSiteInfo', () => {
+		return <Route key="site-info-stats" path="/site-info/:siteID/stats" component={SiteInfoStats}/>
+	});
+	
+	hooks.addFilter('siteInfoMoreMenu', function(menu, site) {
+		
+		menu.push({
+			label: 'Stats',
+			enabled: !this.context.router.isActive(`/site-info/${site.id}/stats`),
+			click: () => {
+				context.events.send('goToRoute', `/site-info/${site.id}/stats`);
+			}
 		});
 
-	};
-
-	hooks.addContent('siteInfoUtilities', (site) => {
-
-		return (
-			<li key="intellij-xdebug-integration"><strong>Xdebug</strong>
-				<p>
-					<button className="btn btn-flat btn-inline" onClick={(event) => {configureIntelliJ(event, site)}} ref="configure-intellij">Configure PhpStorm and IntelliJ IDEs</button>
-				</p>
-			</li>
-		);
+		return menu;
 
 	});
 
