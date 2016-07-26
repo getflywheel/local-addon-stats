@@ -1,4 +1,4 @@
-# Synopsis
+# Synopsis [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/pressmatic/pressmatic-addon-stats/pulls/)
 
 Addon for [Pressmatic](https://pressmatic.io) that shows graphs and resource stats for individual local sites.
 
