@@ -1,6 +1,6 @@
-# Pressmatic Addon: Stats
+# Synopsis
 
-Graphs and resource stats for Pressmatic sites.
+Addon for [Pressmatic](https://pressmatic.io) that shows graphs and resource stats for individual local sites.
 
 ![Pressmatic Addon: Stats Screenshot](/screenshot.png?raw=true)
 
