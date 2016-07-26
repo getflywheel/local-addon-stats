@@ -1,0 +1,17 @@
+{
+	"name": "pressmatic-addon-intellij-xdebug",
+	"productName": "Xdebug IntelliJ integration",
+	"version": "1.0.0",
+	"description": "One-click configuration for IntelliJ IDEs (PhpStorm) and Xdebug.",
+	"renderer": "lib/renderer.js",
+	"scripts": {
+		"build": "babel src -d lib"
+	},
+	"devDependencies": {
+		"babel": "^6.5.2",
+		"babel-cli": "^6.9.0",
+		"babel-preset-es2015": "^6.9.0",
+		"babel-preset-react": "^6.5.0",
+		"babel-preset-stage-0": "^6.5.0"
+	}
+}
