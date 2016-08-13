@@ -6,7 +6,7 @@ Addon for [Pressmatic](https://pressmatic.io) that shows graphs and resource sta
 
 ## Installation
 
-Clone or download a release of this addon and place the folder into the following directory depending on your platform:
+Clone or [download a release](https://github.com/pressmatic/pressmatic-addon-stats/releases) of this addon and place the folder into the following directory depending on your platform:
 
 - macOS: `~/Library/Application Support/Pressmatic/addons`
 
