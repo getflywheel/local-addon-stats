@@ -11,7 +11,8 @@ Addon for [Pressmatic](https://pressmatic.io) that shows graphs and resource sta
 1. Download the [latest release](https://github.com/pressmatic/pressmatic-addon-stats/releases)
 2. Go to Settings » Addons inside Pressmatic (1.1.0 or newer) and click on Install Addon
 3. Browse to the downloaded release
-4. Check the Stats addon to enable it and restart Pressmatic
+4. Check the checkbox by the Stats addon to enable it
+5. Restart Pressmatic
 
 ### Cloning
 
