@@ -1,24 +1,24 @@
 {
-	"name": "pressmatic-addon-stats",
-	"productName": "Pressmatic Stats",
+	"name": "local-addon-stats",
+	"productName": "Local Stats",
 	"version": "1.0.0",
-	"author": "Pressmatic, Inc.",
+	"author": "Flywheel",
 	"contributors": [{
 		"name": "Clay Griffiths",
 		"email": "clay@claygriffiths.com"
 	}],
 	"keywords": [
-		"pressmatic-addon",
+		"local-addon",
 		"stats"
 	],
-	"description": "Graphs and resource stats for Pressmatic sites.",
+	"description": "Graphs and resource stats for Local by Flywheel sites.",
 	"renderer": "lib/renderer.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pressmatic/pressmatic-addon-stats"
+		"url": "https://github.com/getflywheel/local-addon-stats/"
 	},
 	"bugs": {
-		"url": "https://github.com/pressmatic/pressmatic-addon-stats/issues"
+		"url": "https://github.com/getflywheel/local-addon-stats/issues"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -36,6 +36,6 @@
 		"smoothie": "^1.27.0"
 	},
 	"engines": {
-		"pressmatic": "^1.1.0"
+		"local-by-flywheel": "^1.1.0"
 	}
 }
