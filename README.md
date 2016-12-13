@@ -1,32 +1,28 @@
-# Synopsis [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/pressmatic/pressmatic-addon-stats/pulls/)
+# Synopsis [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/getflywheel/local-addon-stats/pulls/)
 
-Addon for [Pressmatic](https://pressmatic.io) that shows graphs and resource stats for individual local sites.
+Addon for [Local by Flywheel](https://local.getflywheel.com) that shows graphs and resource stats for individual local sites.
 
-![Pressmatic Addon: Stats Screenshot](/screenshot.png?raw=true)
+![Local Addon: Stats Screenshot](/screenshot.png?raw=true)
 
 ## Installation
 
 ### Downloading a Release
 
-1. Download the [latest release](https://github.com/pressmatic/pressmatic-addon-stats/releases)
-2. Go to Settings » Addons inside Pressmatic (1.1.0 or newer) and click on Install Addon
+1. Download the [latest release](https://github.com/getflywheel/local-addon-stats/releases)
+2. Go to Settings » Addons inside Local by Flywheel (1.1.0 or newer) and click on Install Addon
 3. Browse to the downloaded release
 4. Check the checkbox by the Stats addon to enable it
-5. Restart Pressmatic
+5. Restart Local
 
 ### Cloning
 
 Place the repository into the following directory depending on your platform:
 
-- macOS: `~/Library/Application Support/Pressmatic/addons`
+- macOS: `~/Library/Application Support/Local by Flywheel/addons`
 
 If you chose to clone instead of downloading a release you will need to use npm to install any production dependencies. This can be done by opening the directory in your shell of choice and typing `npm i --production`.
 
 ## Developing
-
-### Pressmatic Addon API
-
-This addon interfaces with Pressmatic using the [Pressmatic Addon API](https://pressmatic.gitbooks.io/addon-api/content/).
 
 ### Installing Dev Dependencies
 `npm install`
