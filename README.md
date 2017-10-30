@@ -9,7 +9,7 @@ Addon for [Local by Flywheel](https://local.getflywheel.com) that shows graphs a
 ### Downloading a Release
 
 1. Download the [latest release](https://github.com/getflywheel/local-addon-stats/releases)
-2. Go to Settings » Addons inside Local by Flywheel (1.1.0 or newer) and click on Install Addon
+2. Go to Settings » Addons inside Local by Flywheel (2.0.0 or newer) and click on Install Addon
 3. Browse to the downloaded release
 4. Check the checkbox by the Stats addon to enable it
 5. Restart Local
