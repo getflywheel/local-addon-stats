@@ -1,7 +1,7 @@
 {
 	"name": "local-addon-stats",
 	"productName": "Local Stats",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"author": "Flywheel",
 	"contributors": [{
 		"name": "Clay Griffiths",
@@ -36,6 +36,6 @@
 		"smoothie": "^1.27.0"
 	},
 	"engines": {
-		"local-by-flywheel": "^1.1.0"
+		"local-by-flywheel": "^2.0.0"
 	}
 }

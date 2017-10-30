@@ -58,7 +58,7 @@ module.exports = function (context) {
 
 				if (line.indexOf(site.container) !== -1) {
 
-					let matches = (/^[a-z0-9]+\s+([0-9.%]+)\s+([0-9.]+ MiB)/gmi).exec(line);
+					let matches = (/^[a-z0-9]+\s+([0-9.%]+)\s+([0-9.]+\s*MiB)/gmi).exec(line);
 
 					if ( !matches ) {
 						return;
@@ -67,10 +67,10 @@ module.exports = function (context) {
 					let time = new Date().getTime();
 
 					let cpuResult = matches[1].replace('%', '');
-					let memoryResult = matches[2].replace(' MiB', '');
+					let memoryResult = matches[2].replace(/\s*MiB/, '');
 
 					this.cpuSeries.append(time, cpuResult);
-					this.memorySeries.append(time, matches[2].replace(' MiB', ''));
+					this.memorySeries.append(time, matches[2].replace(/\s*MiB/, ''));
 
 					this.setState({
 						cpu: cpuResult,
@@ -114,7 +114,7 @@ module.exports = function (context) {
 
 			this.cpuSeries = new TimeSeries();
 
-			chart.addTimeSeries(this.cpuSeries, {lineWidth: 1, strokeStyle: '#4e95c6'});
+			chart.addTimeSeries(this.cpuSeries, {lineWidth: 1, strokeStyle: '#51bb7b'});
 			chart.streamTo(this.refs['chart-cpu'], 1000);
 
 		};
@@ -151,13 +151,13 @@ module.exports = function (context) {
 
 			this.memorySeries = new TimeSeries();
 
-			chart.addTimeSeries(this.memorySeries, {lineWidth: 1, strokeStyle: '#7f4eb3'});
+			chart.addTimeSeries(this.memorySeries, {lineWidth: 1, strokeStyle: '#51bb7b'});
 			chart.streamTo(this.refs['chart-memory'], 1000);
 
 			childProcess.execFile(context.environment.dockerPath, ['stats', '--no-stream', site.container], {env: context.environment.dockerEnv}, (error, stdout, stderr) => {
-				let maxMemoryMatch = (/\/ ([0-9.]+ MiB)/gmi).exec(stdout);
+				let maxMemoryMatch = (/\/ ([0-9.]+\s*MiB)/gmi).exec(stdout);
 
-				chart.options.maxValue = parseInt(maxMemoryMatch[1].replace(' MiB', ''));
+				chart.options.maxValue = parseInt(maxMemoryMatch[1].replace(/\s*MiB/, ''));
 				chart.options.minValue = 0;
 				chart.updateValueRange();
 			});
@@ -180,19 +180,19 @@ module.exports = function (context) {
 		render() {
 
 			return (
-				<div style={{display: 'flex', flexDirection: 'column', flex: 1}}>
+				<div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '15px 0'}}>
 					<div style={{height: '50%', boxSizing: 'border-box', padding: '15px 0'}} ref="chart-cpu-container">
-						<h4 className="padded-horizontally-more" style={{marginTop: 0}}>
+						<h4 className="padded-horizontally-more" style={{margin: '0 30px 15px'}}>
 							CPU Usage
-							<span style={{float: 'right', fontFamily: 'monospace', color: '#4e95c6'}}>{this.state.cpu ? this.state.cpu + '%' : ''}</span>
+							<span style={{float: 'right', fontFamily: 'monospace', color: '#51bb7b'}}>{this.state.cpu ? this.state.cpu + '%' : ''}</span>
 						</h4>
 
 						<canvas width="" height="" ref="chart-cpu"></canvas>
 					</div>
 					<div style={{height: '50%', boxSizing: 'border-box', padding: '0'}} ref="chart-memory-container">
-						<h4 className="padded-horizontally-more" style={{marginTop: 0}}>
+						<h4 className="padded-horizontally-more" style={{margin: '0 30px 15px'}}>
 							Memory Usage
-							<span style={{float: 'right', fontFamily: 'monospace', color: '#7f4eb3'}}>{this.state.memory ? this.state.memory + ' MiB' : ''}</span>
+							<span style={{float: 'right', fontFamily: 'monospace', color: '#51bb7b'}}>{this.state.memory ? this.state.memory + ' MiB' : ''}</span>
 						</h4>
 
 						<canvas width="400" height="200" ref="chart-memory"></canvas>
