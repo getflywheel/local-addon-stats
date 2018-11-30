@@ -1,5 +1,6 @@
 ### PhpStorm ###
 .idea
+lib
 
 ### Node ###
 # Logs
