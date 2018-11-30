@@ -11,6 +11,8 @@
 		"local-addon",
 		"stats"
 	],
+	"bgColor": "#ffde6b",
+	"icon": "icon.svg",
 	"description": "Graphs and resource stats for Local by Flywheel sites.",
 	"renderer": "lib/renderer.js",
 	"repository": {
