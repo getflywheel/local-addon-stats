@@ -1,6 +1,7 @@
 ### PhpStorm ###
 .idea
 lib
+.DS_Store
 
 ### Node ###
 # Logs
