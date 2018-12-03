@@ -1,12 +1,14 @@
 {
 	"name": "local-addon-stats",
 	"productName": "Local Stats",
-	"version": "1.1.0",
-	"author": "Flywheel",
-	"contributors": [{
-		"name": "Clay Griffiths",
-		"email": "clay@claygriffiths.com"
-	}],
+	"version": "1.2.0",
+	"author": "Flywheel <engineering@getflywheel.com>",
+	"contributors": [
+		{
+			"name": "Clay Griffiths",
+			"email": "clay@getflywheel.com"
+		}
+	],
 	"keywords": [
 		"local-addon",
 		"stats"
@@ -24,7 +26,8 @@
 	},
 	"license": "MIT",
 	"scripts": {
-		"build": "babel src -d lib"
+		"build": "babel src -d lib",
+		"prepare": "npm run build"
 	},
 	"devDependencies": {
 		"@getflywheel/eslint-config-local": "1.0.4",
@@ -39,10 +42,16 @@
 		"eslint-plugin-react": "^7.11.1"
 	},
 	"dependencies": {
-		"lodash": "^4.14.0",
+		"lodash.round": "^4.0.4",
+		"lodash.throttle": "^4.1.1",
 		"smoothie": "^1.27.0"
 	},
+	"bundledDependencies": [
+		"lodash.throttle",
+		"lodash.round",
+		"smoothie"
+	],
 	"engines": {
-		"local-by-flywheel": "^2.0.0"
+		"local-by-flywheel": "^2.5.0"
 	}
 }

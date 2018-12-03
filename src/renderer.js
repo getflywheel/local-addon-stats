@@ -1,16 +1,13 @@
-'use strict';
-
-const path = require('path');
+import React from 'react';
+import SiteInfoStats from './SiteInfoStats';
 
 module.exports = function (context) {
 
 	const hooks = context.hooks;
-	const React = context.React;
-	const { Link, Route } = context.ReactRouter;
+	const { Route } = context.ReactRouter;
 
-	const SiteInfoStats = require('./SiteInfoStats')(context);
-
-	hooks.addContent('routesSiteInfo', () => <Route key="site-info-stats" path="/site-info/:siteID/stats" component={SiteInfoStats}/>);
+	hooks.addContent('routesSiteInfo', () => <Route key="site-info-stats" path="/site-info/:siteID/stats"
+		render={(props) => <SiteInfoStats {...props} dockerode={context.docker.docker()}/>} />);
 
 	hooks.addFilter('siteInfoMoreMenu', function (menu, site) {
 

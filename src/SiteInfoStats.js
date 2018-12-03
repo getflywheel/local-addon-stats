@@ -1,205 +1,245 @@
-const { SmoothieChart, TimeSeries } = require('smoothie');
-const childProcess = require('child_process');
-const readline = require('readline');
-const debounce = require('lodash.debounce');
+import React from 'react';
+import { SmoothieChart, TimeSeries } from 'smoothie';
+import throttle from 'lodash.throttle';
+import round from 'lodash.round';
 
-module.exports = function (context) {
-
-	const Component = context.React.Component;
-	const React = context.React;
-	const $ = context.jQuery;
-
-	const timestampFormatter = (date) => {
-		function pad2 (number) {
-			return (number < 10 ? '0' : '') + number;
-		}
-
-		return pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds());
+const timestampFormatter = (date) => {
+	const pad = (number) => {
+		return (number < 10 ? '0' : '') + number;
 	};
 
-	return class SiteInfoStats extends Component {
-		constructor (props) {
-			super(props);
+	return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+};
 
-			this.statsProcess = undefined;
-			this.memorySeries = undefined;
-			this.cpuSeries = undefined;
+class ExpandingCanvas extends React.Component {
 
-			this.state = {
-				cpu: null,
-				memory: null,
-			};
+	constructor (props) {
+		super(props);
+
+		this.onParentResize = this.onParentResize.bind(this);
+	}
+
+	componentDidMount () {
+		this.createResizeObserver();
+	}
+
+	componentWillUnmount () {
+
+		if (this.ro) {
+			this.ro.disconnect();
+			delete this.ro;
 		}
 
-		componentDidMount () {
+	}
 
-			this.startCPUChart();
-			this.startMemoryChart();
+	createResizeObserver () {
 
-			this.getDockerStats();
+		const canvas = this.props.canvasRef.current;
 
+		this.ro = new ResizeObserver(throttle(this.onParentResize, 100));
+		this.ro.observe(canvas.parentElement);
+
+	}
+
+	onParentResize () {
+
+		const canvas = this.props.canvasRef.current;
+
+		if (!canvas || !canvas.parentElement) {
+			return;
 		}
 
-		getDockerStats () {
+		canvas.width = canvas.parentElement.clientWidth;
+		canvas.height = canvas.parentElement.clientHeight;
 
-			const siteID = this.props.params.siteID;
-			const site = this.props.sites[siteID];
+	}
 
-			this.statsProcess = childProcess.spawn(context.environment.dockerPath, ['stats', site.container], { env: context.environment.dockerEnv });
+	render () {
 
-			readline.createInterface({
-				input: this.statsProcess.stdout,
-				terminal: false,
-			}).on('line', debounce((line) => {
+		return <canvas ref={this.props.canvasRef} />;
+
+	}
+
+}
+
+export default class SiteInfoStats extends React.Component {
+	constructor (props) {
+		super(props);
+
+		this.state = {
+			cpu: null,
+			memory: null,
+			memoryMax: null,
+		};
+
+		this.cpuChartCanvas = React.createRef();
+		this.memoryChartCanvas = React.createRef();
+	}
+
+	componentDidMount () {
+
+		this.startCPUChart();
+		this.startMemoryChart();
+
+		this.getDockerStats();
+
+	}
+
+	componentWillUnmount () {
+
+		if (this.statsStream) {
+			this.statsStream.destroy();
+		}
+
+	}
+
+	getDockerStats () {
+
+		const siteID = this.props.match.params.siteID;
+		const site = this.props.sites[siteID];
+
+		const container = this.props.dockerode.getContainer(site.container);
+
+		const stats = container.stats();
+
+		stats.then((statsStream) => {
+			/* Destroy existing stream if present. */
+			if (this.statsStream) {
+				this.statsStream.destroy();
+			}
+
+			this.statsStream = statsStream;
+
+			this.statsStream.on('data', (statsData) => {
+				let data;
+
+				try {
+					data = JSON.parse(statsData.toString());
+				} catch (e) {
+					return;
+				}
 
 				if (!this.memorySeries || !this.cpuSeries) {
 					return;
 				}
 
-				if (line.indexOf(site.container) !== -1) {
+				const time = new Date(data.read);
 
-					const matches = (/^[a-z0-9]+\s+([0-9.%]+)\s+([0-9.]+\s*MiB)/gmi).exec(line);
+				if (data.cpu_stats) {
+					const cpuDelta = data.cpu_stats.cpu_usage.total_usage - data.precpu_stats.cpu_usage.total_usage;
+					const systemDelta = data.cpu_stats.system_cpu_usage - data.precpu_stats.system_cpu_usage;
 
-					if (!matches) {
-						return;
-					}
+					const cpuUsagePercentage = round((cpuDelta / systemDelta) * 100, 2);
 
-					const time = new Date().getTime();
+					this.cpuSeries.append(time, cpuUsagePercentage);
 
-					const cpuResult = matches[1].replace('%', '');
-					const memoryResult = matches[2].replace(/\s*MiB/, '');
-
-					this.cpuSeries.append(time, parseFloat(cpuResult));
-					this.memorySeries.append(time, parseFloat(memoryResult));
-
-					this.setState({
-						cpu: cpuResult,
-						memory: memoryResult,
-					});
-
+					this.setState({ cpu: cpuUsagePercentage });
 				}
 
-			}), 500);
+				if (data.memory_stats) {
+					const byteToMebibyte = 1.049e+6;
+					const usage = round(data.memory_stats.usage / byteToMebibyte, 2);
 
-		}
+					this.memorySeries.append(time, usage);
 
-		startCPUChart () {
+					this.memoryChart.options.maxValue = Math.round(data.memory_stats.limit / byteToMebibyte);
+					this.memoryChart.options.minValue = 0;
+					this.memoryChart.updateValueRange();
 
-			$(this.refs['chart-cpu']).attr('width', $(this.refs['chart-cpu-container']).width());
-			$(this.refs['chart-cpu']).attr('height', $(this.refs['chart-cpu-container']).height() - 50);
-
-			const chart = new SmoothieChart({
-				millisPerPixel: 100,
-				interpolation: 'linear',
-				grid: {
-					strokeStyle: 'rgba(0,0,0,0.05)',
-					verticalSections: 5,
-					fillStyle: 'transparent',
-					borderVisible: false,
-					millisPerLine: 10000,
-				},
-				maxValue: 100,
-				minValue: 0,
-				yMinFormatter: function (min, precision) {
-					return parseFloat(min).toFixed(precision) + '%';
-				},
-				yMaxFormatter: function (max, precision) {
-					return parseFloat(max).toFixed(precision) + '%';
-				},
-				labels: {
-					fillStyle: '#000000',
-				},
-				timestampFormatter: timestampFormatter,
+					this.setState({ memory: usage });
+				}
 			});
+		});
 
-			this.cpuSeries = new TimeSeries();
+	}
 
-			chart.addTimeSeries(this.cpuSeries, { lineWidth: 1, strokeStyle: '#51bb7b' });
-			chart.streamTo(this.refs['chart-cpu'], 1000);
+	startCPUChart () {
 
-		}
+		this.cpuChart = new SmoothieChart({
+			millisPerPixel: 100,
+			interpolation: 'linear',
+			grid: {
+				strokeStyle: 'rgba(0,0,0,0.05)',
+				verticalSections: 5,
+				fillStyle: 'transparent',
+				borderVisible: false,
+				millisPerLine: 10000,
+			},
+			maxValue: 100,
+			minValue: 0,
+			yMinFormatter: function (min, precision) {
+				return parseFloat(min).toFixed(precision) + '%';
+			},
+			yMaxFormatter: function (max, precision) {
+				return parseFloat(max).toFixed(precision) + '%';
+			},
+			labels: {
+				fillStyle: '#000000',
+			},
+			timestampFormatter: timestampFormatter,
+		});
 
-		startMemoryChart () {
+		this.cpuSeries = new TimeSeries();
 
-			const siteID = this.props.params.siteID;
-			const site = this.props.sites[siteID];
+		this.cpuChart.addTimeSeries(this.cpuSeries, { lineWidth: 1, strokeStyle: '#51bb7b' });
+		this.cpuChart.streamTo(this.cpuChartCanvas.current, 1000);
 
-			$(this.refs['chart-memory']).attr('width', $(this.refs['chart-memory-container']).width());
-			$(this.refs['chart-memory']).attr('height', $(this.refs['chart-memory-container']).height() - 50);
+	}
 
-			const chart = new SmoothieChart({
-				millisPerPixel: 100,
-				interpolation: 'linear',
-				grid: {
-					strokeStyle: 'rgba(0,0,0,0.05)',
-					verticalSections: 5,
-					fillStyle: 'transparent',
-					borderVisible: false,
-					millisPerLine: 10000,
-				},
-				yMinFormatter: function (min, precision) {
-					return parseFloat(min).toFixed(precision) + ' MiB';
-				},
-				yMaxFormatter: function (max, precision) {
-					return parseFloat(max).toFixed(precision) + ' MiB';
-				},
-				labels: {
-					fillStyle: '#000000',
-				},
-				timestampFormatter: timestampFormatter,
-			});
+	startMemoryChart () {
 
-			this.memorySeries = new TimeSeries();
+		this.memoryChart = new SmoothieChart({
+			millisPerPixel: 100,
+			interpolation: 'linear',
+			grid: {
+				strokeStyle: 'rgba(0,0,0,0.05)',
+				verticalSections: 5,
+				fillStyle: 'transparent',
+				borderVisible: false,
+				millisPerLine: 10000,
+			},
+			yMinFormatter: function (min, precision) {
+				return parseFloat(min).toFixed(precision) + ' MiB';
+			},
+			yMaxFormatter: function (max, precision) {
+				return parseFloat(max).toFixed(precision) + ' MiB';
+			},
+			labels: {
+				fillStyle: '#000000',
+			},
+			timestampFormatter: timestampFormatter,
+		});
 
-			chart.addTimeSeries(this.memorySeries, { lineWidth: 1, strokeStyle: '#51bb7b' });
-			chart.streamTo(this.refs['chart-memory'], 1000);
+		this.memorySeries = new TimeSeries();
 
-			childProcess.execFile(context.environment.dockerPath, ['stats', '--no-stream', site.container], { env: context.environment.dockerEnv }, (error, stdout, stderr) => {
-				const maxMemoryMatch = (/\/ ([0-9.]+\s*MiB)/gmi).exec(stdout);
+		this.memoryChart.addTimeSeries(this.memorySeries, { lineWidth: 1, strokeStyle: '#51bb7b' });
+		this.memoryChart.streamTo(this.memoryChartCanvas.current, 1000);
 
-				chart.options.maxValue = parseInt(maxMemoryMatch[1].replace(/\s*MiB/, ''));
-				chart.options.minValue = 0;
-				chart.updateValueRange();
-			});
 
-		}
+	}
 
-		componentWillUnmount () {
+	render () {
 
-			if (this.statsProcess) {
+		return (
+			<div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '15px 0' }}>
+				<h4 className="padded-horizontally-more" style={{ margin: '0 30px 15px', flex: '0' }}>
+					CPU Usage
+					<span style={{ float: 'right', fontFamily: 'monospace', color: '#51bb7b' }}>{this.state.cpu !== null ? this.state.cpu + '%' : ''}</span>
+				</h4>
 
-				this.statsProcess.stdin.pause();
-				this.statsProcess.kill();
-
-				this.statsProcess = undefined;
-
-			}
-
-		}
-
-		render () {
-
-			return (
-				<div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '15px 0' }}>
-					<div style={{ height: '50%', boxSizing: 'border-box', padding: '15px 0' }} ref="chart-cpu-container">
-						<h4 className="padded-horizontally-more" style={{ margin: '0 30px 15px' }}>
-							CPU Usage
-							<span style={{ float: 'right', fontFamily: 'monospace', color: '#51bb7b' }}>{this.state.cpu ? this.state.cpu + '%' : ''}</span>
-						</h4>
-
-						<canvas width="" height="" ref="chart-cpu"></canvas>
-					</div>
-					<div style={{ height: '50%', boxSizing: 'border-box', padding: '0' }} ref="chart-memory-container">
-						<h4 className="padded-horizontally-more" style={{ margin: '0 30px 15px' }}>
-							Memory Usage
-							<span style={{ float: 'right', fontFamily: 'monospace', color: '#51bb7b' }}>{this.state.memory ? this.state.memory + ' MiB' : ''}</span>
-						</h4>
-
-						<canvas width="400" height="200" ref="chart-memory"></canvas>
-					</div>
+				<div style={{ flex: '1', overflow: 'hidden' }}>
+					<ExpandingCanvas canvasRef={this.cpuChartCanvas} />
 				</div>
-			);
-		}
-	};
 
+				<h4 className="padded-horizontally-more" style={{ margin: '30px 15px', flex: '0' }}>
+					Memory Usage
+					<span style={{ float: 'right', fontFamily: 'monospace', color: '#51bb7b' }}>{this.state.memory !== null ? this.state.memory + ' MiB' : ''}</span>
+				</h4>
+
+				<div style={{ flex: '1', overflow: 'hidden' }}>
+					<ExpandingCanvas canvasRef={this.memoryChartCanvas} />
+				</div>
+			</div>
+		);
+	}
 };
