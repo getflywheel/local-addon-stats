@@ -52,6 +52,6 @@
 		"smoothie"
 	],
 	"engines": {
-		"local-by-flywheel": "^2.5.0"
+		"local-by-flywheel": "^3.0.0"
 	}
 }
